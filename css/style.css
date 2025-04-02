@@ -67,6 +67,45 @@ body {
     .mobile-center {
         text-align: center;
     }
+
+    nav {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .auth-container {
+        margin: 1rem;
+        padding: 1rem;
+    }
+
+    .product-card {
+        width: 100%;
+    }
+
+    .admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .logout-btn {
+        position: static;
+        margin-top: 1rem;
+    }
+}
+
+/* Mobile menu toggle */
+.mobile-menu-toggle {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: block;
+    }
+
+    nav:not(.mobile-menu-active) {
+        display: none;
+    }
 }
 
 /* Loading spinner */
