@@ -206,8 +206,27 @@ async function addToCart(productId) {
 // Import auth functions
 import { isAuthenticated, logout } from './auth.js';
 
-// Initialize
+// Global state management
+const appState = {
+    user: null,
+    cart: [],
+    products: []
+};
+
+// Initialize all components
 document.addEventListener('DOMContentLoaded', async function() {
+    // Check authentication
+    const token = localStorage.getItem('authToken');
+    if (token) {
+        try {
+            const user = await verifyToken(token);
+            appState.user = user;
+            updateAuthUI();
+        } catch (err) {
+            localStorage.removeItem('authToken');
+        }
+    }
+
     // Check authentication for protected pages
     if (!isAuthenticated() && window.location.pathname.includes('admin')) {
         window.location.href = 'login.html';
@@ -242,15 +261,138 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function updateCartCount() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
     const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-    document.querySelectorAll('.cart-item-count').forEach(el => {
+    
+    // Update all cart count indicators
+    document.querySelectorAll('#cart-count, #mobile-cart-count').forEach(el => {
         el.textContent = count;
+        el.style.display = count > 0 ? 'flex' : 'none';
     });
+
+    // Update cart page if open
+    if (window.location.pathname.includes('cart.html')) {
+        renderCartItems();
+    }
+}
+
+function renderCartItems() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const cartContainer = document.getElementById('cart-items');
+    if (!cartContainer) return;
+
+    cartContainer.innerHTML = '';
+    let total = 0;
+
+    cart.forEach(item => {
+        const product = products.find(p => p.id === item.productId);
+        if (!product) return;
+
+        total += product.price * item.quantity;
+        
+        const cartItem = document.createElement('div');
+        cartItem.className = 'cart-item flex justify-between items-center py-4 border-b';
+        cartItem.innerHTML = `
+            <div class="flex items-center">
+                <img src="${product.image}" alt="${product.name}" class="w-20 h-20 object-cover rounded">
+                <div class="ml-4">
+                    <h3 class="font-medium">${product.name}</h3>
+                    <p class="text-gray-500">$${product.price.toFixed(2)}</p>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <div class="quantity-selector flex items-center border rounded">
+                    <button class="decrease px-2">-</button>
+                    <span class="quantity px-2">${item.quantity}</span>
+                    <button class="increase px-2">+</button>
+                </div>
+                <button class="remove-item ml-4 text-red-500" data-id="${item.productId}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        cartContainer.appendChild(cartItem);
+    });
+
+    document.getElementById('cart-total').textContent = `$${total.toFixed(2)}`;
+    setupCartItemEvents();
 }
 
 function initCart() {
     updateCartCount();
-    // Additional cart initialization if needed
+    setupCartItemEvents();
+}
+
+function setupCartItemEvents() {
+    // Quantity buttons
+    document.querySelectorAll('.quantity-selector button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const parent = this.closest('.cart-item');
+            const productId = parseInt(parent.querySelector('.remove-item').getAttribute('data-id'));
+            const quantityEl = parent.querySelector('.quantity');
+            let quantity = parseInt(quantityEl.textContent);
+
+            if (this.classList.contains('decrease') && quantity > 1) {
+                quantity--;
+            } else if (this.classList.contains('increase')) {
+                quantity++;
+            }
+
+            quantityEl.textContent = quantity;
+            updateCartItem(productId, quantity);
+        });
+    });
+
+    // Remove buttons
+    document.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = parseInt(this.getAttribute('data-id'));
+            removeFromCart(productId);
+        });
+    });
+}
+
+async function updateCartItem(productId, quantity) {
+    try {
+        const response = await fetch(`${API_URL}/cart`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: 'current-user',
+                productId,
+                quantity
+            })
+        });
+        
+        if (response.ok) {
+            updateCartCount();
+        }
+    } catch (err) {
+        console.error('Error updating cart:', err);
+    }
+}
+
+async function removeFromCart(productId) {
+    try {
+        const response = await fetch(`${API_URL}/cart`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: 'current-user',
+                productId
+            })
+        });
+        
+        if (response.ok) {
+            updateCartCount();
+        }
+    } catch (err) {
+        console.error('Error removing from cart:', err);
+    }
 }
 
 function initQuantitySelectors() {
@@ -297,12 +439,27 @@ function initFormValidation() {
 }
 
 function initMobileMenu() {
-    // Mobile menu toggle would go here
-    const menuToggle = document.querySelector('.mobile-menu-toggle');
-    if (menuToggle) {
-        menuToggle.addEventListener('click', function() {
-            const menu = document.querySelector('.mobile-menu');
-            menu.classList.toggle('hidden');
+    const menuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    if (menuButton && mobileMenu) {
+        menuButton.addEventListener('click', function() {
+            mobileMenu.classList.toggle('hidden');
+            // Toggle between hamburger and close icon
+            const icon = this.querySelector('i');
+            if (mobileMenu.classList.contains('hidden')) {
+                icon.classList.replace('fa-times', 'fa-bars');
+            } else {
+                icon.classList.replace('fa-bars', 'fa-times');
+            }
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!mobileMenu.contains(e.target) && e.target !== menuButton) {
+                mobileMenu.classList.add('hidden');
+                menuButton.querySelector('i').classList.replace('fa-times', 'fa-bars');
+            }
         });
     }
 }
