@@ -5,17 +5,49 @@ const sql = require('mssql');
 const app = express();
 app.use(bodyParser.json());
 
-// SQL Server config
+// Database configuration
 const dbConfig = {
-  user: 'your_username',
-  password: 'your_password',
-  server: 'localhost',
-  database: 'KnittingHavenDB',
+  user: process.env.DB_USER || 'sa',
+  password: process.env.DB_PASSWORD || 'your_secure_password',
+  server: process.env.DB_SERVER || 'localhost',
+  database: process.env.DB_NAME || 'KnittingHavenDB',
   options: {
     encrypt: true,
     trustServerCertificate: true
   }
 };
+
+// Create a single connection pool
+const pool = new sql.ConnectionPool(dbConfig);
+const poolConnect = pool.connect();
+
+// Ensure database tables exist
+async function initializeDatabase() {
+  try {
+    await poolConnect;
+    console.log('Connected to SQL Server');
+    
+    // Create Products table if it doesn't exist
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Products')
+      BEGIN
+        CREATE TABLE Products (
+          id INT IDENTITY(1,1) PRIMARY KEY,
+          name NVARCHAR(100) NOT NULL,
+          price DECIMAL(10,2) NOT NULL,
+          description NVARCHAR(MAX),
+          image NVARCHAR(255),
+          created_at DATETIME DEFAULT GETDATE(),
+          updated_at DATETIME DEFAULT GETDATE()
+        )
+      END
+    `);
+  } catch (err) {
+    console.error('Database initialization error:', err);
+  }
+}
+
+initializeDatabase();
 
 // API Routes
 app.get('/api/products', async (req, res) => {
