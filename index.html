@@ -18,31 +18,59 @@
 </head>
 <body class="bg-pink-50 font-sans">
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
-        <div class="flex items-center space-x-2">
-            <i class="fas fa-scarf text-2xl text-purple-300"></i>
-            <span class="text-xl font-semibold text-gray-700">Knitting Haven</span>
+    <div class="bg-white shadow-sm">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-scarf text-2xl text-purple-300"></i>
+                <span class="text-xl font-semibold text-gray-700">Knitting Haven</span>
+            </div>
+            
+            <!-- Mobile menu button -->
+            <button id="mobile-menu-button" class="md:hidden text-gray-600 focus:outline-none">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex space-x-6">
+                <a href="index.html" class="text-gray-600 hover:text-purple-400 transition">Home</a>
+                <a href="products.html" class="text-gray-600 hover:text-purple-400 transition">Shop</a>
+                <a href="#" class="text-gray-600 hover:text-purple-400 transition">Patterns</a>
+                <a href="#" class="text-gray-600 hover:text-purple-400 transition">About</a>
+                <a href="#" class="text-gray-600 hover:text-purple-400 transition">Contact</a>
+            </nav>
+            
+            <!-- Auth and Cart Links -->
+            <div class="hidden md:flex items-center space-x-4">
+                <a href="login.html" id="login-link" class="bg-purple-300 hover:bg-purple-400 text-white font-semibold py-2 px-4 rounded-full transition flex items-center">
+                    <i class="fas fa-user mr-2"></i> Login
+                </a>
+                <a href="cart.html" class="text-gray-600 hover:text-purple-400 transition relative">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-purple-300 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </a>
+            </div>
         </div>
-        <div class="hidden md:flex space-x-6">
-            <a href="#" class="text-gray-600 hover:text-purple-400 transition">Home</a>
-            <a href="#" class="text-gray-600 hover:text-purple-400 transition">Shop</a>
-            <a href="#" class="text-gray-600 hover:text-purple-400 transition">Patterns</a>
-            <a href="#" class="text-gray-600 hover:text-purple-400 transition">About</a>
-            <a href="#" class="text-gray-600 hover:text-purple-400 transition">Contact</a>
-        </div>
-        <div class="flex items-center space-x-4">
-            <a href="#" class="text-gray-600 hover:text-purple-400 transition">
-                <i class="fas fa-search"></i>
-            </a>
-            <a href="#" class="text-gray-600 hover:text-purple-400 transition">
-                <i class="fas fa-user"></i>
-            </a>
-            <a href="#" class="text-gray-600 hover:text-purple-400 transition relative">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="absolute -top-2 -right-2 bg-purple-300 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
-            </a>
-        </div>
-    </nav>
+        
+        <!-- Mobile Navigation -->
+        <nav id="mobile-menu" class="hidden md:hidden bg-white px-6 pb-4">
+            <div class="flex flex-col space-y-3">
+                <a href="index.html" class="text-gray-600 hover:text-purple-400 transition">Home</a>
+                <a href="products.html" class="text-gray-600 hover:text-purple-400 transition">Shop</a>
+                <a href="#" class="text-gray-600 hover:text-purple-400 transition">Patterns</a>
+                <a href="#" class="text-gray-600 hover:text-purple-400 transition">About</a>
+                <a href="#" class="text-gray-600 hover:text-purple-400 transition">Contact</a>
+                <div class="pt-2 border-t border-gray-100 flex justify-between">
+                    <a href="login.html" class="text-gray-600 hover:text-purple-400 transition">
+                        <i class="fas fa-user mr-2"></i> Login
+                    </a>
+                    <a href="cart.html" class="text-gray-600 hover:text-purple-400 transition relative">
+                        <i class="fas fa-shopping-cart mr-2"></i> Cart
+                        <span id="mobile-cart-count" class="absolute -top-2 -right-2 bg-purple-300 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </div>
 
     <!-- Hero Section -->
     <section class="hero-pattern bg-purple-100 text-white py-20 px-6">
