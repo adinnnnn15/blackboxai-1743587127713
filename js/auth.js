@@ -1,77 +1,65 @@
-// Authentication functions
-const API_URL = 'http://localhost:3000/api';
+// Authentication module
+const API_URL = 'http://localhost:3000';
 
-// Handle login form submission
-document.getElementById('login-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    
+// Login function
+export async function login(email, password) {
     try {
-        const response = await fetch(`${API_URL}/login`, {
+        const response = await fetch(`${API_URL}/api/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ email, password })
         });
-        
-        if (response.ok) {
-            const { token } = await response.json();
-            localStorage.setItem('authToken', token);
-            window.location.href = 'index.html';
-        } else {
-            alert('Login failed. Please check your credentials.');
-        }
-    } catch (err) {
-        console.error('Login error:', err);
-        alert('An error occurred during login.');
-    }
-});
 
-// Handle registration form submission
-document.getElementById('register-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const username = document.getElementById('reg-username').value;
-    const email = document.getElementById('reg-email').value;
-    const password = document.getElementById('reg-password').value;
-    
-    try {
-        const response = await fetch(`${API_URL}/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username, email, password })
-        });
-        
-        if (response.ok) {
-            alert('Registration successful! Please login.');
-            window.location.href = 'login.html';
-        } else {
-            const error = await response.json();
-            alert(`Registration failed: ${error.error}`);
+        if (!response.ok) {
+            throw new Error('Login failed');
         }
-    } catch (err) {
-        console.error('Registration error:', err);
-        alert('An error occurred during registration.');
+
+        const { token, user } = await response.json();
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        return user;
+    } catch (error) {
+        console.error('Login error:', error);
+        throw error;
     }
-});
+}
 
 // Check authentication status
 export function isAuthenticated() {
     return !!localStorage.getItem('authToken');
 }
 
-// Get auth token
-export function getAuthToken() {
-    return localStorage.getItem('authToken');
+// Get current user
+export function getCurrentUser() {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
 }
 
 // Logout function
 export function logout() {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
     window.location.href = 'login.html';
 }
+
+// Initialize auth state
+if (isAuthenticated() && window.location.pathname.endsWith('login.html')) {
+    window.location.href = 'index.html';
+}
+
+// Handle login form submission
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    try {
+        await login(email, password);
+        window.location.href = 'index.html';
+    } catch (error) {
+        alert('Login failed. Please check your credentials.');
+    }
+});
