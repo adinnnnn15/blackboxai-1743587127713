@@ -111,6 +111,118 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// Product CRUD Endpoints
+
+// Get all products
+app.get('/api/products', async (req, res) => {
+    try {
+        const result = await pool.request().query('SELECT * FROM Products');
+        res.json(result.recordset);
+    } catch (err) {
+        console.error('Error fetching products:', err);
+        res.status(500).json({ message: 'Error fetching products' });
+    }
+});
+
+// Get single product
+app.get('/api/products/:id', async (req, res) => {
+    try {
+        const result = await pool.request()
+            .input('id', sql.Int, req.params.id)
+            .query('SELECT * FROM Products WHERE id = @id');
+        
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        
+        res.json(result.recordset[0]);
+    } catch (err) {
+        console.error('Error fetching product:', err);
+        res.status(500).json({ message: 'Error fetching product' });
+    }
+});
+
+// Create product
+app.post('/api/products', async (req, res) => {
+    try {
+        const { name, price, description, image } = req.body;
+        
+        const result = await pool.request()
+            .input('name', sql.NVarChar, name)
+            .input('price', sql.Decimal(10, 2), price)
+            .input('description', sql.NVarChar, description)
+            .input('image', sql.NVarChar, image)
+            .query(`INSERT INTO Products (name, price, description, image) 
+                   VALUES (@name, @price, @description, @image);
+                   SELECT SCOPE_IDENTITY() AS id;`);
+        
+        const newProduct = {
+            id: result.recordset[0].id,
+            name,
+            price,
+            description,
+            image
+        };
+        
+        res.status(201).json(newProduct);
+    } catch (err) {
+        console.error('Error creating product:', err);
+        res.status(500).json({ message: 'Error creating product' });
+    }
+});
+
+// Update product
+app.put('/api/products/:id', async (req, res) => {
+    try {
+        const { name, price, description, image } = req.body;
+        
+        await pool.request()
+            .input('id', sql.Int, req.params.id)
+            .input('name', sql.NVarChar, name)
+            .input('price', sql.Decimal(10, 2), price)
+            .input('description', sql.NVarChar, description)
+            .input('image', sql.NVarChar, image)
+            .query(`UPDATE Products SET 
+                   name = @name, 
+                   price = @price, 
+                   description = @description, 
+                   image = @image 
+                   WHERE id = @id`);
+        
+        res.json({ message: 'Product updated successfully' });
+    } catch (err) {
+        console.error('Error updating product:', err);
+        res.status(500).json({ message: 'Error updating product' });
+    }
+});
+
+// Delete product
+app.delete('/api/products/:id', async (req, res) => {
+    try {
+        await pool.request()
+            .input('id', sql.Int, req.params.id)
+            .query('DELETE FROM Products WHERE id = @id');
+        
+        res.json({ message: 'Product deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting product:', err);
+        res.status(500).json({ message: 'Error deleting product' });
+    }
+});
+
+// Protect admin routes
+app.use('/api/products*', (req, res, next) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ message: 'Unauthorized' });
+        
+        jwt.verify(token, process.env.JWT_SECRET);
+        next();
+    } catch (err) {
+        res.status(401).json({ message: 'Unauthorized' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
